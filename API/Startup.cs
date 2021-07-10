@@ -1,41 +1,80 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using System.IO;
+using Application.Mappings;
+using Application.Service.Implementation;
+using Application.Service.Interface;
+using Domain.Service.Implementation;
+using Domain.Service.Interface;
+using Infrastructure.Data.Configuration;
+using Infrastructure.Data.Repositories;
+using Infrastructure.Service.Implementation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 
 namespace API
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        readonly IConfiguration Configuration;
+        readonly string CorsPolicyName = "corsPolicyName";
+
+        public Startup(IWebHostEnvironment env)
         {
-            Configuration = configuration;
+            Configuration = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", false, true)
+                .AddJsonFile($"appsettings.{env.EnvironmentName}.json", false, true)
+                .AddEnvironmentVariables()
+                .Build();
         }
 
-        public IConfiguration Configuration { get; }
-
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
+            //api
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Version = "v1" });
             });
+            services.AddCors(options =>
+            {
+                options.AddPolicy(CorsPolicyName, builder =>
+                {
+                    builder
+                        .WithOrigins("http://localhost:4200")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials()
+                        .SetIsOriginAllowed(host => true);
+                });
+            });
+
+            //infrastructure
+            services.AddScoped<ITokenManager, TokenManager>();
+            services.AddScoped<IUserRepository, UserRepository>();
+            AddDbContext(services);
+
+            //application
+            services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
+            Mappings.Register();
+            services.AddScoped<IAuthService, AuthService>();
+
+            //domain
+            services.AddScoped<IUserService, UserService>();
         }
 
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        protected virtual void AddDbContext(IServiceCollection services)
+        {
+            services.AddDbContext<AuthDbContext>(options =>
+                options.UseSqlServer(Configuration.GetConnectionString("Default"))
+            );
+        }
+
+        public virtual void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
             {
@@ -43,6 +82,8 @@ namespace API
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1"));
             }
+
+            app.UseCors(CorsPolicyName);
 
             app.UseHttpsRedirection();
 
