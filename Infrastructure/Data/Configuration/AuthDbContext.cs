@@ -1,6 +1,8 @@
 ﻿using Infrastructure.Data.Models.User;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+//migrations are generated from the Infrastructure project using the command:
+//dotnet ef --startup-project ../API/ migrations add InitialCreate -o Data/Migrations
 
 namespace Infrastructure.Data.Configuration
 {
