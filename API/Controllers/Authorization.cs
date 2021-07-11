@@ -12,18 +12,18 @@ namespace API.Controllers
     [ApiController]
     public class Authorization : ControllerBase
     {
-        readonly IAuthService auth;
-        public Authorization(IAuthService auth)
+        readonly IAuthService Service;
+        public Authorization(IAuthService service)
         {
-            this.auth = auth;
+            Service = service;
         }
 
         [HttpPost("signup")]
         [ProducesResponseType(typeof(SignupResponse), (int)HttpStatusCode.OK)]
-        public async Task<ActionResult> Signup(SignupRequest request) => Ok(await auth.Signup(request));
+        public async Task<ActionResult> Signup(SignupRequest request) => Ok(await Service.Signup(request));
 
         [HttpPost("login")]
         [ProducesResponseType(typeof(LoginResponse), (int)HttpStatusCode.OK)]
-        public async Task<ActionResult> Login(LoginRequest request) => Ok(await auth.Login(request));
+        public async Task<ActionResult> Login(LoginRequest request) => Ok(await Service.Login(request));
     }
 }

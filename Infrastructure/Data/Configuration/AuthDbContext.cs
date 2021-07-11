@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 //migrations are generated from the Infrastructure project using the command:
 //dotnet ef --startup-project ../API/ migrations add InitialCreate -o Data/Migrations
+//dotnet ef --startup-project ../API/ database update
 
 namespace Infrastructure.Data.Configuration
 {

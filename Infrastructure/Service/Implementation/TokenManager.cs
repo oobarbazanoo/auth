@@ -19,10 +19,8 @@ namespace Infrastructure.Service.Implementation
 
         public (byte[] salt, byte[] hash) CreatePasswordHash(string password)
         {
-            using (var hmac = new System.Security.Cryptography.HMACSHA512())
-            {
-                return (hmac.Key, hmac.ComputeHash(Encoding.UTF8.GetBytes(password)));
-            }
+            using var hmac = new HMACSHA512();
+            return (hmac.Key, hmac.ComputeHash(Encoding.UTF8.GetBytes(password)));
         }
 
         public string GenerateToken(string login)
